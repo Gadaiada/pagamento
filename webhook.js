@@ -8,19 +8,27 @@ router.post('/webhook', (req, res) => {
 
     console.log('Evento recebido do Asaas:', event);
 
+    // 👀 Verifica se é confirmação de pagamento
     if (event === 'PAYMENT_CONFIRMED') {
       const clienteId = payment.customer;
+      console.log('Cliente ID recebido no webhook:', clienteId);
+
       aprovarVendedor(clienteId);
 
       const vendedor = buscarVendedor(clienteId);
-      console.log(`Pagamento confirmado. Vendedor aprovado: ${vendedor?.nome}`);
+
+      if (vendedor) {
+        console.log(`Pagamento confirmado. Vendedor aprovado: ${vendedor.nome}`);
+      } else {
+        console.log(`Pagamento confirmado, mas vendedor não encontrado na memória. ID: ${clienteId}`);
+      }
     }
 
-    // ✅ Importante: sempre responder mesmo se o evento não for tratado
-    res.status(200).send('OK');
+    // ✅ Sempre responde ao Asaas rapidamente
+    res.status(200).send('Webhook processado com sucesso');
   } catch (err) {
-    console.error('Erro no webhook:', err.message);
-    res.status(500).send('Erro no webhook');
+    console.error('Erro ao processar webhook:', err.message);
+    res.status(500).send('Erro interno no servidor');
   }
 });
 
