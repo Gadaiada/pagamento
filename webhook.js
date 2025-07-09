@@ -3,17 +3,25 @@ const router = express.Router();
 const { aprovarVendedor, buscarVendedor } = require('./sellerStorage');
 
 router.post('/webhook', (req, res) => {
-  const { event, payment } = req.body;
+  try {
+    const { event, payment } = req.body;
 
-  if (event === 'PAYMENT_CONFIRMED') {
-    const clienteId = payment.customer;
-    aprovarVendedor(clienteId);
+    console.log('Evento recebido do Asaas:', event);
 
-    const vendedor = buscarVendedor(clienteId);
-    console.log(`Pagamento confirmado. Vendedor aprovado: ${vendedor?.nome}`);
+    if (event === 'PAYMENT_CONFIRMED') {
+      const clienteId = payment.customer;
+      aprovarVendedor(clienteId);
+
+      const vendedor = buscarVendedor(clienteId);
+      console.log(`Pagamento confirmado. Vendedor aprovado: ${vendedor?.nome}`);
+    }
+
+    // ✅ Importante: sempre responder mesmo se o evento não for tratado
+    res.status(200).send('OK');
+  } catch (err) {
+    console.error('Erro no webhook:', err.message);
+    res.status(500).send('Erro no webhook');
   }
-
-  res.sendStatus(200);
 });
 
 module.exports = router;
