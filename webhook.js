@@ -7,32 +7,39 @@ router.post('/webhook', async (req, res) => {
   try {
     const { event, payment } = req.body;
 
-    console.log('📩 Evento recebido do Asaas:', event);
-    res.status(200).send('OK'); // Confirma recepção pro Asaas
+    console.log('📩 Webhook recebido do Asaas: Evento ->', event);
+    res.status(200).send('OK'); // Sempre responde 200 para evitar reenvio do Asaas
 
-    if (event === 'PAYMENT_CONFIRMED') {
-      const clienteId = payment.customer;
-      console.log('✅ ID do cliente recebido no webhook:', clienteId);
+    // Eventos que indicam pagamento confirmado
+    const eventosPagamento = ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'];
+    if (!eventosPagamento.includes(event)) return;
 
-      aprovarVendedor(clienteId); // Atualiza status local
+    const clienteId = payment?.customer;
+    if (!clienteId) {
+      console.warn('⚠️ Webhook recebido sem ID de cliente');
+      return;
+    }
 
-      const vendedor = buscarVendedor(clienteId);
+    console.log('🔎 Verificando pagamento do cliente:', clienteId);
+    aprovarVendedor(clienteId); // Atualiza status do vendedor localmente
 
-      if (vendedor) {
-        console.log(`🚀 Pagamento confirmado. Vendedor aprovado: ${vendedor.nome}`);
-        try {
-          const resultado = await registrarVendedor(vendedor); // Envia para a plataforma multivendor
-          console.log('✅ Vendedor registrado na plataforma multivendor:', resultado);
-        } catch (erroInterno) {
-          console.error('❌ Erro ao enviar vendedor ao multvendedor:', erroInterno?.response?.data || erroInterno.message);
-        }
-      } else {
-        console.warn(`⚠️ Pagamento confirmado, mas vendedor não encontrado. ID: ${clienteId}`);
-      }
+    const vendedor = buscarVendedor(clienteId);
+    if (!vendedor) {
+      console.warn(`⚠️ Vendedor com ID ${clienteId} não encontrado. Não será enviado ao Multvendor.`);
+      return;
+    }
+
+    console.log(`✅ Pagamento confirmado. Vendedor aprovado: ${vendedor.nome} (${clienteId})`);
+
+    try {
+      const resultado = await registrarVendedor(vendedor);
+      console.log('🎉 Vendedor registrado na plataforma Multvendor com sucesso:', resultado);
+    } catch (erroInterno) {
+      console.error('❌ Falha ao registrar vendedor no Multvendor:', erroInterno?.response?.data || erroInterno.message);
     }
   } catch (err) {
-    console.error('❌ Erro ao processar webhook:', err.message);
-    res.status(200).send('Erro interno, mas recebido'); // Evita reenvio do Asaas
+    console.error('❌ Erro inesperado ao processar webhook:', err.message);
+    res.status(200).send('Erro interno, mas recebido'); // Evita erro 408 no Asaas
   }
 });
 
