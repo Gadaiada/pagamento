@@ -29,6 +29,9 @@ module.exports = {
   salvarVendedor: (id, dados) => {
     const vendedores = lerVendedores();
     vendedores[id] = dados;
+
+    console.log('✅ Vendedor salvo com ID:', id, dados); // 👈 Log útil
+
     salvarNoArquivo(vendedores);
   },
 
