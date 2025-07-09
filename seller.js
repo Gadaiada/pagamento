@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { criarCliente, criarAssinatura } = require('../services/asaasService');
-const { salvarVendedor } = require('../utils/sellerStorage');
+const { criarCliente, criarAssinatura } = require('./asaasService');
+const { salvarVendedor } = require('./sellerStorage');
 
 router.post('/vendedor', async (req, res) => {
   try {
