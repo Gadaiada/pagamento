@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { aprovarVendedor, buscarVendedor } = require('../utils/sellerStorage');
+const { aprovarVendedor, buscarVendedor } = require('./sellerStorage');
 
 router.post('/webhook', (req, res) => {
   const { event, payment } = req.body;
