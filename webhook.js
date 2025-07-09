@@ -8,10 +8,12 @@ router.post('/webhook', (req, res) => {
 
     console.log('Evento recebido do Asaas:', event);
 
-    // 👀 Verifica se é confirmação de pagamento
+    // ✅ Sempre responde rapidamente ao Asaas
+    res.status(200).send('OK');
+
     if (event === 'PAYMENT_CONFIRMED') {
       const clienteId = payment.customer;
-      console.log('Cliente ID recebido no webhook:', clienteId);
+      console.log('ID do cliente recebido no webhook:', clienteId);
 
       aprovarVendedor(clienteId);
 
@@ -23,12 +25,10 @@ router.post('/webhook', (req, res) => {
         console.log(`Pagamento confirmado, mas vendedor não encontrado na memória. ID: ${clienteId}`);
       }
     }
-
-    // ✅ Sempre responde ao Asaas rapidamente
-    res.status(200).send('Webhook processado com sucesso');
   } catch (err) {
     console.error('Erro ao processar webhook:', err.message);
-    res.status(500).send('Erro interno no servidor');
+    // Mesmo em erro, responder com 200 evita novo 408
+    res.status(200).send('Erro interno, mas recebido');
   }
 });
 
