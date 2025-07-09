@@ -1,22 +1,31 @@
-const express = require('express');
-const router = express.Router();
-const { salvarVendedor, buscarVendedor } = require('./armazenamentoVendedor');
-
-// Cadastro de novo vendedor (já existe)
 router.post('/vendedor', async (req, res) => {
-  // ... sua lógica atual ...
-});
+  try {
+    const vendedor = req.body;
 
-// 🔍 Novo endpoint: buscar vendedor por ID
-router.get('/vendedores/:id', (req, res) => {
-  const id = req.params.id;
-  const vendedor = buscarVendedor(id);
+    console.log('📦 Dados recebidos:', vendedor);
 
-  if (vendedor) {
-    res.json(vendedor);
-  } else {
-    res.status(404).json({ erro: 'Vendedor não encontrado' });
+    const cliente = await criarCliente(vendedor);
+    console.log('✅ Cliente criado:', cliente);
+
+    const assinatura = await criarAssinatura(cliente.id);
+    console.log('✅ Assinatura criada:', assinatura);
+
+    salvarVendedor(cliente.id, {
+      ...vendedor,
+      asaasId: cliente.id,
+      assinaturaId: assinatura.id,
+      status: 'pendente'
+    });
+
+    res.json({
+      mensagem: 'Vendedor registrado. Aguardando pagamento.',
+      linkPagamento: assinatura.invoiceUrl
+    });
+  } catch (erro) {
+    console.error('❌ Erro completo ao registrar vendedor:', erro?.response?.data || erro.message);
+    res.status(500).json({
+      erro: 'Erro ao registrar vendedor',
+      detalhes: erro?.response?.data || erro.message
+    });
   }
 });
-
-module.exports = router;
