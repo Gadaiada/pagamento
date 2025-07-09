@@ -6,8 +6,13 @@ const { salvarVendedor } = require('./armazenamentoVendedor');
 router.post('/vendedor', async (req, res) => {
   try {
     const vendedor = req.body;
+    console.log('📦 Dados recebidos para cadastro:', vendedor);
+
     const cliente = await criarCliente(vendedor);
+    console.log('✅ Cliente criado no Asaas:', cliente);
+
     const assinatura = await criarAssinatura(cliente.id);
+    console.log('✅ Assinatura criada:', assinatura);
 
     salvarVendedor(cliente.id, {
       ...vendedor,
@@ -16,13 +21,18 @@ router.post('/vendedor', async (req, res) => {
       status: 'pendente'
     });
 
+    console.log('✅ Vendedor salvo com ID:', cliente.id);
+
     res.json({
       mensagem: 'Vendedor registrado. Aguardando pagamento.',
       linkPagamento: assinatura.invoiceUrl
     });
   } catch (erro) {
     console.error('❌ Erro completo ao registrar vendedor:', erro?.response?.data || erro.message);
-    res.status(500).json({ erro: 'Erro ao registrar vendedor', detalhes: erro.message });
+    res.status(500).json({
+      erro: 'Erro ao registrar vendedor',
+      detalhes: erro?.response?.data || erro.message
+    });
   }
 });
 
