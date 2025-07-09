@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { criarCliente, criarAssinatura } = require('./asaasService');
-const { salvarVendedor } = require('./armazenamentoVendedor');
+const {
+  salvarVendedor,
+  buscarVendedor,
+  listarVendedores
+} = require('./armazenamentoVendedor');
 
 router.post('/vendedor', async (req, res) => {
   try {
@@ -21,8 +25,6 @@ router.post('/vendedor', async (req, res) => {
       status: 'pendente'
     });
 
-    console.log('✅ Vendedor salvo com ID:', cliente.id);
-
     res.json({
       mensagem: 'Vendedor registrado. Aguardando pagamento.',
       linkPagamento: assinatura.invoiceUrl
@@ -34,6 +36,20 @@ router.post('/vendedor', async (req, res) => {
       detalhes: erro?.response?.data || erro.message
     });
   }
+});
+
+router.get('/vendedores/:id', (req, res) => {
+  const vendedor = buscarVendedor(req.params.id);
+  if (vendedor) {
+    res.json(vendedor);
+  } else {
+    res.status(404).json({ erro: 'Vendedor não encontrado' });
+  }
+});
+
+router.get('/vendedores', (req, res) => {
+  const todos = listarVendedores();
+  res.json(todos);
 });
 
 module.exports = router;
