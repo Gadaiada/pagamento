@@ -1,29 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { criarCliente, criarAssinatura } = require('./asaasService');
-const { salvarVendedor } = require('./armazenamentoVendedor');
+const { salvarVendedor, buscarVendedor } = require('./armazenamentoVendedor');
 
-
+// Cadastro de novo vendedor (já existe)
 router.post('/vendedor', async (req, res) => {
-  try {
-    const vendedor = req.body;
+  // ... sua lógica atual ...
+});
 
-    const cliente = await criarCliente(vendedor);
-    const assinatura = await criarAssinatura(cliente.id);
+// 🔍 Novo endpoint: buscar vendedor por ID
+router.get('/vendedores/:id', (req, res) => {
+  const id = req.params.id;
+  const vendedor = buscarVendedor(id);
 
-    salvarVendedor(cliente.id, {
-      ...vendedor,
-      asaasId: cliente.id,
-      assinaturaId: assinatura.id,
-      status: 'pendente'
-    });
-
-    res.json({
-      mensagem: 'Vendedor registrado. Aguardando pagamento.',
-      linkPagamento: assinatura.invoiceUrl
-    });
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro ao registrar vendedor', detalhes: err.message });
+  if (vendedor) {
+    res.json(vendedor);
+  } else {
+    res.status(404).json({ erro: 'Vendedor não encontrado' });
   }
 });
 
