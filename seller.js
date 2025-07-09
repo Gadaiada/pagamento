@@ -1,14 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { criarCliente, criarAssinatura } = require('./asaasService');
+const { salvarVendedor } = require('./armazenamentoVendedor');
+
 router.post('/vendedor', async (req, res) => {
   try {
     const vendedor = req.body;
-
-    console.log('📦 Dados recebidos:', vendedor);
-
     const cliente = await criarCliente(vendedor);
-    console.log('✅ Cliente criado:', cliente);
-
     const assinatura = await criarAssinatura(cliente.id);
-    console.log('✅ Assinatura criada:', assinatura);
 
     salvarVendedor(cliente.id, {
       ...vendedor,
@@ -23,9 +22,8 @@ router.post('/vendedor', async (req, res) => {
     });
   } catch (erro) {
     console.error('❌ Erro completo ao registrar vendedor:', erro?.response?.data || erro.message);
-    res.status(500).json({
-      erro: 'Erro ao registrar vendedor',
-      detalhes: erro?.response?.data || erro.message
-    });
+    res.status(500).json({ erro: 'Erro ao registrar vendedor', detalhes: erro.message });
   }
 });
+
+module.exports = router;
