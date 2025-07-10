@@ -1,14 +1,14 @@
-require('dotenv').config();
 const express = require('express');
 const app = express();
-
+require('dotenv').config();
 app.use(express.json());
 
-const sellerRoutes = require('./seller');
-const webhookRoutes = require('./webhook');
+const checkout = require('./checkoutAsaas');
+const webhook = require('./webhook');
 
-app.use('/api', sellerRoutes);
-app.use('/api', webhookRoutes);
+app.use('/', checkout);
+app.use('/', webhook);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(3000, () => {
+  console.log('🟢 Servidor rodando na porta 3000');
+});
