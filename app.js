@@ -1,17 +1,21 @@
 const express = require('express');
 const path = require('path');
-app.use(express.static(path.join(__dirname)));
-
-const app = express();
 require('dotenv').config();
+
+// 🟢 inicializa o express primeiro
+const app = express();
+
 app.use(express.json());
 
-const checkout = require('./checkoutAsaas');
-const webhook = require('./webhook');
+// 🔗 serve arquivos estáticos como index.html
+app.use(express.static(path.join(__dirname)));
 
-app.use('/', checkout);
-app.use('/', webhook);
+// 🔀 rotas
+app.use('/', require('./checkoutAsaas'));
+app.use('/', require('./webhook'));
+app.use('/', require('./painelStatus')); // se estiver usando
 
+// 🚀 inicia o servidor
 app.listen(3000, () => {
   console.log('🟢 Servidor rodando na porta 3000');
 });
