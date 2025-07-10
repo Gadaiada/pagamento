@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pagamento Webskull Marketplace</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto }
+    input, select { display:block; margin:1rem 0; width:100%; padding:0.5rem }
+    button { padding:1rem; background:#24a154; color:#fff; border:none; border-radius:6px; cursor:pointer }
+  </style>
+</head>
+<body>
+  <h2>Ative sua conta de vendedor</h2>
+  <p>Preencha os dados abaixo para pagar com PIX ou Cartão e liberar seu acesso automático.</p>
+
+  <form id="pagamentoForm">
+    <input name="name" placeholder="Seu nome" required>
+    <input name="email" type="email" placeholder="Seu email" required>
+    <input name="phone" placeholder="Seu telefone" required>
+    <select name="plano">
+      <option value="mensal">Plano Mensal</option>
+      <option value="anual">Plano Anual</option>
+    </select>
+    <button type="submit">Gerar Link de Pagamento</button>
+  </form>
+
+  <script>
+    document.getElementById('pagamentoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      const query = new URLSearchParams(data).toString();
+
+      const res = await fetch('/checkout/asaas?' + query);
+      const r = await res.json();
+
+      if (r.invoiceUrl) {
+        window.location.href = r.invoiceUrl;
+      } else {
+        alert('Erro ao gerar pagamento: ' + (r.error || 'Falha desconhecida'));
+      }
+    });
+  </script>
+</body>
+</html>
