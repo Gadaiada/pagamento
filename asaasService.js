@@ -10,13 +10,29 @@ const api = axios.create({
 
 module.exports = {
   criarCliente: async ({ nome, email, telefone }) => {
-    const res = await api.post('/customers', { name: nome, email, phone: telefone });
+    const res = await api.post('/customers', {
+      name: nome,
+      email,
+      phone: telefone
+    });
     return res.data;
   },
 
   criarAssinatura: async (clienteId, plano) => {
-    const planoId = plano === 'anual' ? 'XXXX' : '5734'; // Substitua XXXX pelo ID do plano anual
-    const res = await api.post('/subscriptions', { customer: clienteId, plan: planoId });
+    // 💳 Definindo valor e ciclo com base no plano escolhido
+    const valor = plano === 'anual' ? 199.90 : 29.90;
+    const ciclo = plano === 'anual' ? 'YEARLY' : 'MONTHLY';
+
+    // 🔁 Criando assinatura recorrente manualmente
+    const assinatura = {
+      customer: clienteId,
+      billingType: 'BOLETO', // ou 'PIX', 'CREDIT_CARD'
+      value: valor,
+      cycle: ciclo,
+      description: `Assinatura ${plano} Webskull Marketplace`
+    };
+
+    const res = await api.post('/subscriptions', assinatura);
     return res.data;
   }
 };
