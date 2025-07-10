@@ -11,21 +11,22 @@
 </head>
 <body>
   <h2>Ative sua conta de vendedor</h2>
-  <p>Preencha os dados abaixo para pagar com PIX ou Cartão e liberar seu acesso automático.</p>
+  <p>Preencha os dados abaixo para pagar com PIX ou Cartão e liberar seu acesso.</p>
 
-  <form id="pagamentoForm">
-    <input name="name" placeholder="Seu nome" required>
-    <input name="email" type="email" placeholder="Seu email" required>
-    <input name="phone" placeholder="Seu telefone" required>
+  <form id="form">
+    <input name="name" placeholder="Nome completo" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="phone" placeholder="Telefone (com DDD)" required>
+    <input name="document" placeholder="CPF ou CNPJ" required>
     <select name="plano">
-      <option value="mensal">Plano Mensal</option>
-      <option value="anual">Plano Anual</option>
+      <option value="mensal">Mensal</option>
+      <option value="anual">Anual</option>
     </select>
     <button type="submit">Gerar Link de Pagamento</button>
   </form>
 
   <script>
-    document.getElementById('pagamentoForm').addEventListener('submit', async (e) => {
+    document.getElementById('form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
       const query = new URLSearchParams(data).toString();
@@ -36,9 +37,6 @@
       if (r.invoiceUrl) {
         window.location.href = r.invoiceUrl;
       } else {
-        alert('Erro ao gerar pagamento: ' + (r.error || 'Falha desconhecida'));
+        alert('Erro: ' + (r.error || 'Falha desconhecida'));
       }
     });
-  </script>
-</body>
-</html>
