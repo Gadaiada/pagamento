@@ -19,9 +19,21 @@ router.post('/webhook', async (req, res) => {
   try {
     const resultado = await registrarVendedor(vendedor);
     console.log('✅ Vendedor criado no Multvendor:', resultado);
-  } catch (erro) {
-    console.error('❌ Erro ao criar vendedor:', erro.message);
+
+} catch (erro) {
+  console.error('❌ Erro ao criar vendedor:', {
+    message: erro.message,
+    response: erro?.response?.data,
+    status: erro?.response?.status
+  });
+}
   }
 });
 
 module.exports = router;
+
+
+
+
+
+
