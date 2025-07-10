@@ -5,32 +5,24 @@ const { salvarVendedorTemporario } = require('./armazenamentoVendedor');
 
 router.get('/checkout/asaas', async (req, res) => {
   try {
-    const { name, email, phone, plano = 'mensal' } = req.query;
+    const { name, email, phone, document, plano = 'mensal' } = req.query;
 
-    if (!name || !email || !phone) {
-      return res.status(400).json({ error: 'Campos obrigatórios: name, email, phone' });
+    if (!name || !email || !phone || !document) {
+      return res.status(400).json({ error: 'Campos obrigatórios: name, email, phone, document' });
     }
 
-    // 🔹 Criação do cliente no Asaas
-    const cliente = await criarCliente({
-      nome: name,
-      email,
-      telefone: phone
-    });
-
-    // 🔹 Criação da assinatura no Asaas (recorrente)
+    const cliente = await criarCliente({ nome: name, email, telefone: phone, documento: document });
     const assinatura = await criarAssinatura(cliente.id, plano);
 
-    // 🔹 Armazena localmente para ativar após pagamento confirmado
     salvarVendedorTemporario(cliente.id, {
       nome: name,
       email,
       telefone: phone,
       plano,
+      documento,
       asaasId: cliente.id
     });
 
-    // 🔹 Retorna o link de pagamento
     res.json({ invoiceUrl: assinatura.invoiceUrl });
   } catch (erro) {
     console.error('❌ Erro no checkoutAsaas:', erro?.response?.data || erro.message);
