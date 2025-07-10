@@ -3,40 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <title>Pagamento Webskull Marketplace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto }
-    input, select { display:block; margin:1rem 0; width:100%; padding:0.5rem }
-    button { padding:1rem; background:#24a154; color:#fff; border:none; border-radius:6px; cursor:pointer }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f3f3;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      color: #24a154;
+    }
+    input, select {
+      display: block;
+      margin: 1rem 0;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 1rem;
+      background: #24a154;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #1e8449;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 1rem;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
-  <h2>Ative sua conta de vendedor</h2>
-  <p>Preencha os dados abaixo para pagar com PIX ou Cartão e liberar seu acesso.</p>
+  <h2>🔐 Ative sua conta de vendedor</h2>
+  <p>Preencha os dados abaixo e gere seu link de pagamento via PIX ou Cartão. Após pagamento confirmado, seu acesso será liberado automaticamente 🚀</p>
 
   <form id="form">
     <input name="name" placeholder="Nome completo" required>
     <input name="email" type="email" placeholder="Email" required>
     <input name="phone" placeholder="Telefone (com DDD)" required>
     <input name="document" placeholder="CPF ou CNPJ" required>
-    <select name="plano">
-      <option value="mensal">Mensal</option>
-      <option value="anual">Anual</option>
+    <select name="plano" required>
+      <option value="">Escolha o plano</option>
+      <option value="mensal">Plano Mensal (R$29,90)</option>
+      <option value="anual">Plano Anual (R$199,90)</option>
     </select>
-    <button type="submit">Gerar Link de Pagamento</button>
+    <button type="submit">💳 Gerar Link de Pagamento</button>
   </form>
+
+  <div id="loading" class="loading" style="display:none;">⏳ Gerando link, aguarde...</div>
 
   <script>
     document.getElementById('form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      document.getElementById('loading').style.display = 'block';
+
       const data = new FormData(e.target);
       const query = new URLSearchParams(data).toString();
 
-      const res = await fetch('/checkout/asaas?' + query);
-      const r = await res.json();
+      try {
+        const res = await fetch('/checkout/asaas?' + query);
+        const r = await res.json();
 
-      if (r.invoiceUrl) {
-        window.location.href = r.invoiceUrl;
-      } else {
-        alert('Erro: ' + (r.error || 'Falha desconhecida'));
+        if (r.invoiceUrl) {
+          window.location.href = r.invoiceUrl;
+        } else {
+          alert('Erro: ' + (r.error || 'Falha desconhecida'));
+          document.getElementById('loading').style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Erro no envio:', err);
+        alert('Erro ao conectar com servidor');
+        document.getElementById('loading').style.display = 'none';
       }
     });
+  </script>
+</body>
+</html>
