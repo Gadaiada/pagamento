@@ -14,29 +14,30 @@ router.get('/checkout/asaas', async (req, res) => {
       });
     }
 
-    // 🔹 Criação do cliente no Asaas
+    // 🧾 Criação do cliente no Asaas
     const cliente = await criarCliente({
       nome: name,
       email: email,
       telefone: phone,
-      documento: document
+      documento: document // ✅ usando 'document' corretamente
     });
 
-    // 🔁 Criação da assinatura recorrente
+    // 💳 Criação da assinatura recorrente
     const assinatura = await criarAssinatura(cliente.id, plano);
 
-    // 💾 Armazenamento temporário dos dados para ativação via webhook
+    // 💾 Armazenamento temporário para ativação futura
     salvarVendedorTemporario(cliente.id, {
       nome: name,
       email: email,
       telefone: phone,
       plano,
-      documento,
+      documento: document,
       asaasId: cliente.id
     });
 
-    // 🔗 Retorna link de pagamento para o front
+    // 🔗 Retorna o link de pagamento para redirecionamento
     res.json({ invoiceUrl: assinatura.invoiceUrl });
+
   } catch (erro) {
     console.error('❌ Erro no checkoutAsaas:', erro?.response?.data || erro.message);
 
