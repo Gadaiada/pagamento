@@ -1,6 +1,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
+// 🚀 Cria cliente HTTP com a base URL já incluindo /api/v2
 const api = axios.create({
   baseURL: process.env.MULTVENDOR_API_URL,
   headers: {
@@ -26,7 +27,9 @@ module.exports = {
       send_email_verification_link: "0"
     };
 
-    const response = await api.post('/api/v2/sellers.json', payload);
+    // ✅ AQUI: não repetir /api/v2 — só usar o endpoint relativo
+    const response = await api.post('/sellers.json', payload);
+
     return response.data;
   }
 };
