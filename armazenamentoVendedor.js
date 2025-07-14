@@ -7,7 +7,7 @@ function salvarVendedorTemporario(idCliente, dados) {
 
 function buscarVendedor(idCliente) {
   const existe = !!vendedores[idCliente];
-  console.log(`[armazenamento] 🔍 Buscar vendedor: ${idCliente} → ${existe ? 'Encontrado' : 'Não encontrado'}`);
+  console.log(`[armazenamento] 🔍 Buscando vendedor: ${idCliente} → ${existe ? 'Encontrado' : 'Não encontrado'}`);
   return vendedores[idCliente];
 }
 
