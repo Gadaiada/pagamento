@@ -1,11 +1,11 @@
 const axios = require('axios');
-require('dotenv').config();
 const crypto = require('crypto');
+require('dotenv').config();
 
 const api = axios.create({
-  baseURL: process.env.MULTVENDOR_API_URL,
+  baseURL: process.env.MULTVENDOR_API_URL, // Exemplo: https://mvmapi.webkul.com/api/v2
   headers: {
-    Authorization: `Bearer ${process.env.MULTVENDOR_API_TOKEN}`,
+    Authorization: `Bearer ${process.env.MULTVENDOR_API_TOKEN}`, // Token puro no .env, aqui vem com "Bearer"
     Accept: 'application/json',
     'Content-Type': 'application/json'
   }
@@ -21,26 +21,27 @@ module.exports = {
       email: v.email,
       password: senha,
       state: 'RO',
-      country: 'BR',
-      country_code: "55",
+      country: 'BR',              // ISO 3166
+      country_code: "55",         // Código de telefone internacional
       contact: v.telefone,
       send_welcome_email: "0",
       send_email_verification_link: "0",
       store_address: "Assinatura mensal Webskull Marketplace"
     };
 
-    console.log('📡 Payload enviado ao Multvendor:', JSON.stringify(payload, null, 2));
+    console.log('📡 Enviando payload para o Multvendor:', JSON.stringify(payload, null, 2));
 
     try {
       const response = await api.post('/sellers.json', payload);
-      console.log('🎉 Vendedor criado!');
+      console.log('🎉 Vendedor criado com sucesso!');
       return response.data;
     } catch (erro) {
       console.error('❌ Erro ao criar vendedor:', {
         mensagem: erro.message,
-        resposta: erro?.response?.data,
-        status: erro?.response?.status
+        status: erro?.response?.status,
+        resposta: erro?.response?.data
       });
+
       throw erro;
     }
   }
