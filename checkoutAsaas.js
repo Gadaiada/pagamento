@@ -1,52 +1,28 @@
-const express = require('express');
-const router = express.Router();
-const { criarCliente, criarAssinatura } = require('./asaasService');
+const axios = require('axios');
 const { salvarVendedorTemporario } = require('./armazenamentoVendedor');
 
-router.get('/checkout/asaas', async (req, res) => {
-  try {
-    const { name, email, phone, document, plano = 'mensal' } = req.query;
+async function criarAssinaturaMensal(v) {
+  const cliente = await axios.post('https://sandbox.asaas.com/api/v3/customers', {
+    name: v.nome,
+    email: v.email,
+    phone: v.telefone
+  }, {
+    headers: { access_token: process.env.ASAAS_TOKEN }
+  });
 
-    // 🛡️ Validação dos campos obrigatórios
-    if (!name || !email || !phone || !document) {
-      return res.status(400).json({
-        error: 'Todos os campos são obrigatórios: name, email, phone, document'
-      });
-    }
+  salvarVendedorTemporario(cliente.data.id, v);
 
-    // 🧾 Criação do cliente no Asaas
-    const cliente = await criarCliente({
-      nome: name,
-      email: email,
-      telefone: phone,
-      documento: document // ✅ usando 'document' corretamente
-    });
+  const assinatura = await axios.post('https://sandbox.asaas.com/api/v3/subscriptions', {
+    customer: cliente.data.id,
+    billingType: 'BOLETO',
+    value: 29.90,
+    cycle: 'MONTHLY',
+    description: 'Assinatura mensal Webskull Marketplace'
+  }, {
+    headers: { access_token: process.env.ASAAS_TOKEN }
+  });
 
-    // 💳 Criação da assinatura recorrente
-    const assinatura = await criarAssinatura(cliente.id, plano);
+  return assinatura.data;
+}
 
-    // 💾 Armazenamento temporário para ativação futura
-    salvarVendedorTemporario(cliente.id, {
-      nome: name,
-      email: email,
-      telefone: phone,
-      plano,
-      documento: document,
-      asaasId: cliente.id
-    });
-
-    // 🔗 Retorna o link de pagamento para redirecionamento
-    res.json({ invoiceUrl: assinatura.invoiceUrl });
-
-  } catch (erro) {
-    console.error('❌ Erro no checkoutAsaas:', erro?.response?.data || erro.message);
-
-    const mensagem = erro?.response?.data?.errors?.map(e => e.description).join('; ') || erro.message;
-    res.status(500).json({
-      error: 'Falha ao gerar link de pagamento',
-      detalhes: mensagem
-    });
-  }
-});
-
-module.exports = router;
+module.exports = { criarAssinaturaMensal };
