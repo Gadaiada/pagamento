@@ -8,23 +8,23 @@ router.post('/', async (req, res) => {
   const timestamp = new Date().toISOString();
   const logPrefix = `[${timestamp}]`;
 
-  // 📥 Recebendo corpo da requisição
+  // 📥 Log completo do corpo da requisição
   console.log(`${logPrefix} 📥 Webhook recebido`);
   const bodyLog = JSON.stringify(req.body, null, 2);
-  console.log(`${logPrefix} 📦 Corpo da requisição:\n${bodyLog}`);
+  console.log(`${logPrefix} 📦 Corpo recebido:\n${bodyLog}`);
   fs.appendFileSync('webhook.log', `${logPrefix} 📦 Corpo recebido:\n${bodyLog}\n`);
 
   res.status(200).send('OK');
 
-  // ✅ Correção: extração segura e direta dos campos
+  // 🔎 Extração segura dos dados
   const evento = req.body?.evento;
   const pagamento = req.body?.pagamento;
   const idCliente = pagamento?.cliente;
   const status = (pagamento?.status || '').toUpperCase();
 
-  console.log(`${logPrefix} 🔍 Dados extraídos: Evento = ${evento}, Status = ${status}, Cliente = ${idCliente}`);
+  console.log(`${logPrefix} 🔍 Dados extraídos: Evento = ${evento || '[vazio]'}, Status = ${status || '[vazio]'}, Cliente = ${idCliente || '[vazio]'}`);
 
-  // 🔎 Validação de evento
+  // ✅ Fluxo exclusivo para PAGAMENTO_CONFIRMADO com status CONFIRMADO
   if (!evento) {
     console.log(`${logPrefix} ⚠️ Evento ausente`);
     fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Evento ausente\n`);
@@ -37,44 +37,40 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  // 🔎 Validação de status
   if (!status) {
-    console.log(`${logPrefix} ⚠️ Status ausente`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Status ausente\n`);
+    console.log(`${logPrefix} ⚠️ Status de pagamento ausente`);
+    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Status de pagamento ausente\n`);
     return;
   }
 
   if (status !== 'CONFIRMADO') {
-    console.log(`${logPrefix} ❌ Status inesperado: ${status}`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ❌ Status inesperado: ${status}\n`);
+    console.log(`${logPrefix} ❌ Status de pagamento não é CONFIRMADO: ${status}`);
+    fs.appendFileSync('webhook.log', `${logPrefix} ❌ Status não CONFIRMADO: ${status}\n`);
     return;
   }
 
-  // 🔎 Validação do cliente
   if (!idCliente) {
-    console.log(`${logPrefix} ❌ ID de cliente ausente`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ❌ ID de cliente ausente\n`);
+    console.log(`${logPrefix} ❌ ID do cliente ausente`);
+    fs.appendFileSync('webhook.log', `${logPrefix} ❌ ID do cliente ausente\n`);
     return;
   }
 
-  // 🔍 Busca do vendedor temporário
+  // 🔍 Buscar vendedor temporário
   const vendedor = buscarVendedor(idCliente);
   if (!vendedor) {
-    console.log(`${logPrefix} ❌ Vendedor temporário não encontrado para cliente ${idCliente}`);
+    console.log(`${logPrefix} ❌ Vendedor não encontrado para cliente ${idCliente}`);
     fs.appendFileSync('webhook.log', `${logPrefix} ❌ Vendedor não encontrado para cliente ${idCliente}\n`);
     return;
   }
 
-  console.log(`${logPrefix} ✅ Vendedor localizado: ${vendedor.nome} (${vendedor.email})`);
-  fs.appendFileSync('webhook.log', `${logPrefix} ✅ Vendedor localizado: ${vendedor.nome} (${vendedor.email})\n`);
-
-  // ✅ Aprovação e criação no Webkul
+  // ✅ Aprovar e registrar vendedor
   aprovarVendedor(idCliente);
-  console.log(`${logPrefix} ✅ Vendedor aprovado automaticamente`);
+  console.log(`${logPrefix} ✅ Vendedor aprovado: ${vendedor.nome} (${vendedor.email})`);
+  fs.appendFileSync('webhook.log', `${logPrefix} ✅ Vendedor aprovado: ${vendedor.nome} (${vendedor.email})\n`);
 
   try {
     const resultado = await registrarVendedor(vendedor);
-    console.log(`${logPrefix} 🎉 Vendedor criado:\n${JSON.stringify(resultado, null, 2)}`);
+    console.log(`${logPrefix} 🎉 Vendedor criado com sucesso:\n${JSON.stringify(resultado, null, 2)}`);
     fs.appendFileSync('webhook.log', `${logPrefix} 🎉 Vendedor criado:\n${JSON.stringify(resultado, null, 2)}\n`);
   } catch (erro) {
     const respostaErro = erro?.response?.data || erro;
