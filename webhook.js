@@ -7,62 +7,44 @@ const { registrarVendedor } = require('./marketplaceService');
 router.post('/webhook', async (req, res) => {
   const timestamp = new Date().toISOString();
   const logPrefix = `[${timestamp}]`;
+  const { evento, pagamento } = req.body;
+  const idCliente = pagamento?.cliente;
+  const status = (pagamento?.status || '').toUpperCase();
 
-  // 📥 Confirma recebimento do webhook
-  console.log(`${logPrefix} 📥 Webhook recebido`);
+  console.log(`${logPrefix} 📥 Webhook recebido: Evento = ${evento}, Status = ${status}, Cliente = ${idCliente}`);
+  fs.appendFileSync('webhook.log', `${logPrefix} 📨 Webhook recebido:\n${JSON.stringify(req.body, null, 2)}\n`);
+
   res.status(200).send('OK');
 
-  // 📨 Exibe corpo completo no log
-  const bodyLog = JSON.stringify(req.body, null, 2);
-  console.log(`${logPrefix} 📨 Conteúdo recebido:\n${bodyLog}`);
-  fs.appendFileSync('webhook.log', `${logPrefix} 📨 Conteúdo recebido:\n${bodyLog}\n`);
-
-  const { evento, pagamento } = req.body;
-
-  // 🎯 Só aceita evento PAGAMENTO_CONFIRMADO
   if (evento !== 'PAGAMENTO_CONFIRMADO') {
     console.log(`${logPrefix} ⚠️ Evento ignorado: ${evento}`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Evento ignorado: ${evento}\n`);
     return;
   }
 
-  // 🔒 Só continua se o status do pagamento for CONFIRMADO
-  const status = (pagamento?.status || '').toUpperCase();
   if (status !== 'CONFIRMADO') {
-    console.log(`${logPrefix} ⚠️ Pagamento com status inesperado: ${status}`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Pagamento com status inesperado: ${status}\n`);
+    console.log(`${logPrefix} ⚠️ Status ignorado: ${status}`);
     return;
   }
 
-  const idCliente = pagamento?.cliente;
   if (!idCliente) {
-    console.log(`${logPrefix} ⚠️ Cliente não identificado no pagamento`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Cliente não identificado no pagamento\n`);
+    console.log(`${logPrefix} ❌ Cliente não encontrado no webhook`);
     return;
   }
 
-  console.log(`${logPrefix} 🔎 Buscando vendedor com ID: ${idCliente}`);
   const vendedor = buscarVendedor(idCliente);
-
   if (!vendedor) {
-    console.log(`${logPrefix} ❌ Nenhum vendedor temporário encontrado`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ❌ Nenhum vendedor temporário encontrado para ID: ${idCliente}\n`);
+    console.log(`${logPrefix} ❌ Vendedor não localizado para cliente ${idCliente}`);
     return;
   }
 
   aprovarVendedor(idCliente);
-  console.log(`${logPrefix} ✅ Vendedor aprovado: ${vendedor.nome} (${vendedor.email})`);
-  fs.appendFileSync('webhook.log', `${logPrefix} ✅ Vendedor aprovado: ${vendedor.nome} (${vendedor.email})\n`);
+  console.log(`${logPrefix} ✅ Vendedor temporário aprovado: ${vendedor.nome} (${vendedor.email})`);
 
-  // 🔐 Criação automática no Multvendor
   try {
     const resultado = await registrarVendedor(vendedor);
-    console.log(`${logPrefix} 🎉 Vendedor criado no Multvendor!`);
-    console.log(`${logPrefix} 🧾 Resposta da API:\n${JSON.stringify(resultado, null, 2)}`);
-    fs.appendFileSync('webhook.log', `${logPrefix} 🎉 Vendedor criado no Multvendor:\n${JSON.stringify(resultado, null, 2)}\n`);
+    console.log(`${logPrefix} 🎉 Vendedor criado com sucesso:\n${JSON.stringify(resultado, null, 2)}`);
   } catch (erro) {
-    console.error(`${logPrefix} ❌ Erro ao criar vendedor:`, erro?.response?.data || erro);
-    fs.appendFileSync('webhook.log', `${logPrefix} ❌ Erro ao criar vendedor:\n${JSON.stringify(erro?.response?.data || erro, null, 2)}\n`);
+    console.error(`${logPrefix} ❌ Erro ao criar vendedor:\n`, erro?.response?.data || erro);
   }
 });
 
