@@ -10,6 +10,7 @@ async function criarAssinaturaMensal(v) {
     headers: { access_token: process.env.ASAAS_TOKEN }
   });
 
+  console.log(`[checkout] 🧾 Cliente criado: ${cliente.data.id} (${cliente.data.name})`);
   salvarVendedorTemporario(cliente.data.id, v);
 
   const assinatura = await axios.post('https://sandbox.asaas.com/api/v3/subscriptions', {
@@ -22,6 +23,7 @@ async function criarAssinaturaMensal(v) {
     headers: { access_token: process.env.ASAAS_TOKEN }
   });
 
+  console.log(`[checkout] 🔁 Assinatura criada para cliente ${cliente.data.id}`);
   return assinatura.data;
 }
 
