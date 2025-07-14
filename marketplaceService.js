@@ -2,7 +2,6 @@ const axios = require('axios');
 require('dotenv').config();
 const crypto = require('crypto');
 
-// 🔗 Cria cliente HTTP para a API Multvendor
 const api = axios.create({
   baseURL: process.env.MULTVENDOR_API_URL,
   headers: {
@@ -14,7 +13,6 @@ const api = axios.create({
 
 module.exports = {
   registrarVendedor: async (v) => {
-    // 🔐 Gera senha aleatória de 8 caracteres hexadecimais
     const senha = crypto.randomBytes(4).toString('hex');
 
     const payload = {
@@ -23,22 +21,22 @@ module.exports = {
       email: v.email,
       password: senha,
       state: 'RO',
-      country: 'Brasil',
-      country_code: 55,
+      country: 'BR',
+      country_code: "55",
       contact: v.telefone,
       send_welcome_email: "0",
-      send_email_verification_link: "0"
+      send_email_verification_link: "0",
+      store_address: "Assinatura mensal Webskull Marketplace"
     };
 
-    console.log('📡 Enviando para Multvendor...');
-    console.log('🔐 Dados do payload:', JSON.stringify(payload, null, 2));
+    console.log('📡 Payload enviado ao Multvendor:', JSON.stringify(payload, null, 2));
 
     try {
       const response = await api.post('/sellers.json', payload);
-      console.log('🎉 Vendedor criado com sucesso!');
+      console.log('🎉 Vendedor criado!');
       return response.data;
     } catch (erro) {
-      console.error('❌ Erro ao criar vendedor no Multvendor:', {
+      console.error('❌ Erro ao criar vendedor:', {
         mensagem: erro.message,
         resposta: erro?.response?.data,
         status: erro?.response?.status
