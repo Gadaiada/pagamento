@@ -30,14 +30,16 @@ module.exports = {
       store_address: "Assinatura mensal Webskull Marketplace"
     };
 
-    console.log(`[multvendor] 📡 Enviando payload para Webkul:\n${JSON.stringify(payload, null, 2)}`);
+    console.log(`[multvendor] 📡 Payload enviado:\n${JSON.stringify(payload, null, 2)}`);
 
     try {
       const response = await api.post('/sellers.json', payload);
-      console.log(`[multvendor] 🎉 Vendedor criado! ID: ${response.data?.seller?.id || 'sem ID'}`);
+      console.log(`[multvendor] 🎉 Vendedor criado!`);
       return response.data;
     } catch (erro) {
-      console.error(`[multvendor] ❌ Falha ao criar vendedor:`, erro?.response?.data || erro);
+      const statusErro = erro?.response?.status || 'desconhecido';
+      const dadosErro = erro?.response?.data || erro;
+      console.error(`[multvendor] ❌ Erro (status ${statusErro}):`, dadosErro);
       throw erro;
     }
   }
