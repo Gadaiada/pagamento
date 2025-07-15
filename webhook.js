@@ -21,9 +21,9 @@ router.post('/', async (req, res) => {
   console.log(`${logPrefix} 🔎 Chaves no corpo do webhook:`, chavesRaiz);
   fs.appendFileSync('webhook.log', `${logPrefix} 🔎 Chaves no corpo: ${chavesRaiz.join(', ')}\n`);
 
-  // 🧠 Extração confiável dos dados
-  const evento = req.body?.evento ?? null;
-  const pagamento = req.body?.pagamento ?? null;
+  // 🧠 Extração confiável dos dados com compatibilidade (Português/Inglês)
+  const evento = req.body?.evento ?? req.body?.event ?? null;
+  const pagamento = req.body?.pagamento ?? req.body?.payment ?? null;
   const idCliente = pagamento?.cliente ?? null;
   const status = typeof pagamento?.status === 'string' ? pagamento.status.toUpperCase() : null;
 
