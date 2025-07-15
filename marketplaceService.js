@@ -2,6 +2,9 @@ const axios = require('axios');
 const crypto = require('crypto');
 require('dotenv').config();
 
+console.log('[multvendor] 🚀 Inicializando serviço de criação de vendedor...');
+
+// 🔐 Configuração da API
 const api = axios.create({
   baseURL: process.env.MULTVENDOR_API_URL,
   headers: {
@@ -13,9 +16,13 @@ const api = axios.create({
 
 module.exports = {
   registrarVendedor: async (v) => {
-    const senha = crypto.randomBytes(4).toString('hex');
-    console.log(`[multvendor] 🔒 Gerando senha para ${v.email}: ${senha}`);
+    console.log(`[multvendor] 🟢 Iniciando registro para: ${v.nome} (${v.email})`);
 
+    // 🔒 Gerando senha segura
+    const senha = crypto.randomBytes(4).toString('hex');
+    console.log(`[multvendor] 🔑 Senha gerada: ${senha}`);
+
+    // 📦 Montagem do payload
     const payload = {
       sp_store_name: v.nome,
       seller_name: v.nome,
@@ -30,16 +37,24 @@ module.exports = {
       store_address: "Assinatura mensal Webskull Marketplace"
     };
 
-    console.log(`[multvendor] 📡 Payload enviado:\n${JSON.stringify(payload, null, 2)}`);
+    console.log(`[multvendor] 📤 Enviando payload para Webkul:\n${JSON.stringify(payload, null, 2)}`);
 
+    // 🚀 Enviando requisição
     try {
       const response = await api.post('/sellers.json', payload);
-      console.log(`[multvendor] 🎉 Vendedor criado!`);
+
+      console.log(`[multvendor] 🎯 Status da resposta: ${response.status}`);
+      console.log(`[multvendor] 🎉 Vendedor criado com sucesso!`);
+      console.log(`[multvendor] 📄 Resposta completa:\n${JSON.stringify(response.data, null, 2)}`);
+
       return response.data;
     } catch (erro) {
       const statusErro = erro?.response?.status || 'desconhecido';
-      const dadosErro = erro?.response?.data || erro;
-      console.error(`[multvendor] ❌ Erro (status ${statusErro}):`, dadosErro);
+      const dadosErro = erro?.response?.data || erro?.message || 'Erro desconhecido';
+
+      console.error(`[multvendor] ❌ Erro ao criar vendedor (status ${statusErro})`);
+      console.error(`[multvendor] 🔍 Detalhes do erro:\n${JSON.stringify(dadosErro, null, 2)}`);
+
       throw erro;
     }
   }
