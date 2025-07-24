@@ -3,7 +3,6 @@ const { salvarVendedorTemporario } = require('./armazenamentoVendedor');
 
 async function criarAssinaturaMensal(v) {
   try {
-    // 🧾 Criação do cliente no Asaas
     const cliente = await axios.post('https://sandbox.asaas.com/api/v3/customers', {
       name: v.nome,
       email: v.email,
@@ -12,9 +11,6 @@ async function criarAssinaturaMensal(v) {
       headers: { access_token: process.env.ASAAS_TOKEN }
     });
 
-    console.log(`[checkout] 🧾 Cliente criado: ${cliente.data.id}`);
-
-    // 🔁 Criação da assinatura mensal
     const assinatura = await axios.post('https://sandbox.asaas.com/api/v3/subscriptions', {
       customer: cliente.data.id,
       billingType: 'CARTAO_DE_CREDITO',
@@ -25,10 +21,6 @@ async function criarAssinaturaMensal(v) {
       headers: { access_token: process.env.ASAAS_TOKEN }
     });
 
-    console.log(`[checkout] 🔁 Assinatura criada: ${assinatura.data.id}`);
-    console.log(`[checkout] 🔗 PaymentLink: ${assinatura.data.paymentLink}`);
-
-    // 💾 Salvando vendedor temporário com assinatura e link
     salvarVendedorTemporario(cliente.data.id, {
       nome: v.nome,
       email: v.email,
@@ -39,8 +31,7 @@ async function criarAssinaturaMensal(v) {
 
     return assinatura.data;
   } catch (err) {
-    const erroDetalhado = err?.response?.data || err.message || err;
-    console.error('[checkout] ❌ Erro ao criar cliente ou assinatura:', erroDetalhado);
+    console.error('[checkout] ❌ Erro:', err?.response?.data || err.message);
     throw err;
   }
 }
