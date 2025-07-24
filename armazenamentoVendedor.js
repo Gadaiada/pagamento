@@ -1,7 +1,7 @@
 const vendedoresTemporarios = {};
 
 function salvarVendedorTemporario(clienteId, dados) {
-  console.log('[armazenamento] 🧠 Salvando com ID do cliente:', clienteId);
+  console.log('[armazenamento] 💾 Salvando cliente:', clienteId);
   vendedoresTemporarios[clienteId] = dados;
 
   if (dados.assinatura) {
@@ -16,8 +16,8 @@ function salvarVendedorTemporario(clienteId, dados) {
 }
 
 function recuperarVendedor(id) {
-  console.log('[armazenamento] 🔍 Buscando vendedor por ID:', id);
+  console.log('[armazenamento] 🔍 Buscando vendedor com ID:', id);
   return vendedoresTemporarios[id] || null;
 }
 
-module.exports = { salvarVendedorTemporario, recuperarVendedor };
+export { salvarVendedorTemporario, recuperarVendedor };
