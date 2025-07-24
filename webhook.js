@@ -1,48 +1,48 @@
-const express = require('express');
-const app = express();
+const { gerarSenhaAleatoria } = require('./utils');
+const { salvarVendedor } = require('./db');
 
-// Middleware para interpretar JSON no body
-app.use(express.json());
+module.exports = (req, res) => {
+  console.log('[webhook] 🔔 Evento recebido:', req.body);
 
-app.post('/webhook', (req, res) => {
-  console.log('[webhook] 🧾 Evento recebido:', req.body);
+  try {
+    const event = req.body?.event;
+    const payment = req.body?.payment;
+    const subscriptionId = payment?.subscription;
+    const status = payment?.status;
 
-  // Extraindo os dados com segurança
-  const event = req.body?.event;
-  const paymentStatus = req.body?.payment?.status;
-  const subscriptionId = req.body?.payment?.subscription;
+    if (!event || !payment || !subscriptionId || !status) {
+      console.warn('[webhook] ⚠️ Dados incompletos no corpo');
+      return res.status(400).json({ error: 'Dados incompletos no webhook' });
+    }
 
-  console.log('[webhook] 🎯 Status:', paymentStatus);
-  console.log('[webhook] 🔗 Assinatura:', subscriptionId);
+    console.log(`[webhook] 🎯 Evento: ${event}, Status: ${status}, Sub ID: ${subscriptionId}`);
 
-  if (!subscriptionId) {
-    console.error('[armazenamento] ❌ ID da assinatura está undefined');
-    return res.status(400).json({ error: 'Subscription ID não encontrado' });
+    if (event !== 'PAYMENT_CONFIRMED' || status !== 'CONFIRMED') {
+      console.log('[webhook] ⏭️ Evento ignorado, não é pagamento confirmado');
+      return res.status(200).json({ message: 'Evento ignorado' });
+    }
+
+    // Simulando busca de email no pagamento (substitua conforme sua estrutura)
+    const emailDoCliente = payment.email || req.body?.customer?.email;
+    if (!emailDoCliente) {
+      console.error('[webhook] ❌ Email do cliente não encontrado');
+      return res.status(400).json({ error: 'Email não encontrado' });
+    }
+
+    const senha = gerarSenhaAleatoria();
+    const novoVendedor = {
+      id: subscriptionId,
+      email: emailDoCliente,
+      senha,
+      criadoEm: new Date().toISOString()
+    };
+
+    salvarVendedor(novoVendedor);
+    console.log('[webhook] ✅ Vendedor criado com sucesso:', novoVendedor);
+
+    res.status(200).json({ message: 'Vendedor registrado com sucesso' });
+  } catch (err) {
+    console.error('[webhook] 💥 Erro no processamento:', err.message);
+    res.status(500).json({ error: 'Erro interno no servidor' });
   }
-
-  // Simulação da busca no armazenamento
-  console.log('[armazenamento] 🔍 Buscando vendedor com ID:', subscriptionId);
-  const vendedor = buscarVendedor(subscriptionId); // Substitua por seu método real
-
-  if (!vendedor) {
-    console.log('[armazenamento] ⚠️ Vendedor não encontrado');
-    return res.status(404).json({ error: 'Vendedor não encontrado' });
-  }
-
-  console.log('[armazenamento] ✅ Vendedor encontrado:', vendedor);
-
-  // Lógica adicional...
-  res.status(200).json({ message: 'Webhook processado com sucesso' });
-});
-
-// Função fictícia para simular a busca
-function buscarVendedor(id) {
-  const bancoDeDadosSimulado = {
-    'sub_dyygz8jf34todu2b': { nome: 'Marcio', plano: 'Premium' }
-  };
-  return bancoDeDadosSimulado[id] || null;
-}
-
-app.listen(3000, () => {
-  console.log('🚀 Servidor rodando na porta 3000');
-});
+};
