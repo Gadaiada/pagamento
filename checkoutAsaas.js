@@ -1,16 +1,19 @@
-const axios = require('axios');
-const { salvarVendedorTemporario } = require('./armazenamentoVendedor');
+import axios from 'axios';
+import { salvarVendedorTemporario } from './armazenamentoVendedor.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 async function criarAssinaturaMensal(v) {
   try {
-    console.log('[checkout] 🔄 Iniciando criação do cliente...');
+    console.log('[checkout] 🔄 Criando cliente Asaas...');
     const cliente = await axios.post('https://sandbox.asaas.com/api/v3/customers', {
       name: v.nome,
       email: v.email,
       phone: v.telefone
     }, {
-      headers: { access_token: process.env.ASAAS_TOKEN }
+      headers: { access_token: process.env.ASAS_TOKEN }
     });
+
     console.log('[checkout] ✅ Cliente criado:', cliente.data.id);
 
     console.log('[checkout] 🔄 Criando assinatura...');
@@ -19,13 +22,13 @@ async function criarAssinaturaMensal(v) {
       billingType: 'CREDIT_CARD',
       value: 45,
       cycle: 'MONTHLY',
-      description: 'Assinatura mensal Webskull Marketplace'
+      description: 'Assinatura Webskull Marketplace'
     }, {
-      headers: { access_token: process.env.ASAAS_TOKEN }
+      headers: { access_token: process.env.ASAS_TOKEN }
     });
+
     console.log('[checkout] ✅ Assinatura criada:', assinatura.data.id);
 
-    console.log('[checkout] 💾 Salvando vendedor temporário...');
     salvarVendedorTemporario(cliente.data.id, {
       nome: v.nome,
       email: v.email,
@@ -34,11 +37,12 @@ async function criarAssinaturaMensal(v) {
       paymentLink: assinatura.data.paymentLink
     });
 
+    console.log('[checkout] 🎉 Vendedor salvo com sucesso!');
     return assinatura.data;
   } catch (err) {
-    console.error('[checkout] ❌ Erro:', err?.response?.data || err.message);
+    console.error('[checkout] ❌ Erro no processo:', err?.response?.data || err.message);
     throw err;
   }
 }
 
-module.exports = { criarAssinaturaMensal };
+export { criarAssinaturaMensal };
