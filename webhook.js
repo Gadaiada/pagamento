@@ -1,14 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
-const { aprovarVendedor, buscarVendedor } = require('./armazenamentoVendedor');
+const {
+  aprovarVendedor,
+  buscarVendedor,
+  recuperarIdPorAssinaturaOuLink
+} = require('./armazenamentoVendedor');
 const { registrarVendedor } = require('./marketplaceService');
 
 router.post('/', async (req, res) => {
   const timestamp = new Date().toISOString();
   const logPrefix = `[${timestamp}]`;
 
-  // 📥 Log completo do corpo recebido
   console.log(`${logPrefix} 📥 Webhook recebido`);
   const bodyLog = JSON.stringify(req.body, null, 2);
   console.log(`${logPrefix} 📦 Corpo recebido:\n${bodyLog}`);
@@ -16,28 +19,21 @@ router.post('/', async (req, res) => {
 
   res.status(200).send('OK');
 
-  // 🔍 Diagnóstico das chaves recebidas
   const chavesRaiz = Object.keys(req.body);
   console.log(`${logPrefix} 🔎 Chaves no corpo do webhook:`, chavesRaiz);
   fs.appendFileSync('webhook.log', `${logPrefix} 🔎 Chaves no corpo: ${chavesRaiz.join(', ')}\n`);
 
-  // 🧠 Extração confiável dos dados com compatibilidade (Português/Inglês)
   const evento = req.body?.evento ?? req.body?.event ?? null;
   const pagamento = req.body?.pagamento ?? req.body?.payment ?? null;
-  const idCliente = pagamento?.cliente ?? null;
+  let idCliente = pagamento?.cliente ?? null;
+  const assinatura = pagamento?.assinatura;
+  const paymentLink = pagamento?.paymentLink;
   const status = typeof pagamento?.status === 'string' ? pagamento.status.toUpperCase() : null;
 
   console.log(`${logPrefix} 🧪 Dados extraídos: Evento = ${evento}, Status = ${status}, Cliente = ${idCliente}`);
   fs.appendFileSync('webhook.log', `${logPrefix} 🧪 Dados extraídos: Evento = ${evento}, Status = ${status}, Cliente = ${idCliente}\n`);
 
-  // 🔒 Validações iniciais
-  if (!evento) {
-    console.log(`${logPrefix} ⚠️ Campo 'evento' ausente ou inválido`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ⚠️ Campo 'evento' ausente ou inválido\n`);
-    return;
-  }
-
-  if (evento !== 'PAGAMENTO_CONFIRMADO') {
+  if (!evento || evento !== 'PAGAMENTO_CONFIRMADO') {
     console.log(`${logPrefix} ⏸️ Evento ignorado: ${evento}`);
     fs.appendFileSync('webhook.log', `${logPrefix} ⏸️ Evento ignorado: ${evento}\n`);
     return;
@@ -49,13 +45,19 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  if (!idCliente) {
-    console.log(`${logPrefix} ❌ ID de cliente ausente`);
-    fs.appendFileSync('webhook.log', `${logPrefix} ❌ ID de cliente ausente\n`);
-    return;
+  // 🔁 Recuperar cliente dinamicamente se estiver ausente
+  if (!idCliente && (assinatura || paymentLink)) {
+    idCliente = recuperarIdPorAssinaturaOuLink(assinatura, paymentLink);
+    if (idCliente) {
+      console.log(`${logPrefix} 🔁 ID do cliente recuperado via fallback: ${idCliente}`);
+      fs.appendFileSync('webhook.log', `${logPrefix} 🔁 ID recuperado via fallback: ${idCliente}\n`);
+    } else {
+      console.log(`${logPrefix} ❌ Cliente não encontrado por assinatura/paymentLink`);
+      fs.appendFileSync('webhook.log', `${logPrefix} ❌ Cliente não encontrado por fallback\n`);
+      return;
+    }
   }
 
-  // 🔍 Busca do vendedor temporário
   const vendedor = buscarVendedor(idCliente);
   if (!vendedor) {
     console.log(`${logPrefix} ❌ Vendedor não localizado para cliente: ${idCliente}`);
@@ -66,7 +68,6 @@ router.post('/', async (req, res) => {
   console.log(`${logPrefix} ✅ Vendedor encontrado: ${vendedor.nome} (${vendedor.email})`);
   fs.appendFileSync('webhook.log', `${logPrefix} ✅ Vendedor encontrado: ${vendedor.nome} (${vendedor.email})\n`);
 
-  // ✅ Aprovar e criar vendedor
   aprovarVendedor(idCliente);
   console.log(`${logPrefix} ✅ Vendedor aprovado`);
   fs.appendFileSync('webhook.log', `${logPrefix} ✅ Vendedor aprovado\n`);
