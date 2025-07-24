@@ -1,27 +1,23 @@
-const vendedores = {};
+const vendedoresTemporarios = {};
 
-function salvarVendedorTemporario(idCliente, dados) {
-  console.log(`[armazenamento] 💾 Salvando: ${idCliente}`);
-  vendedores[idCliente] = dados;
-  if (dados.assinatura) vendedores[`assinatura:${dados.assinatura}`] = idCliente;
-  if (dados.paymentLink) vendedores[`link:${dados.paymentLink}`] = idCliente;
+function salvarVendedorTemporario(clienteId, dados) {
+  console.log('[armazenamento] 🧠 Salvando com ID do cliente:', clienteId);
+  vendedoresTemporarios[clienteId] = dados;
+
+  if (dados.assinatura) {
+    vendedoresTemporarios[dados.assinatura] = dados;
+    console.log('[armazenamento] 🧩 Indexado por assinatura:', dados.assinatura);
+  }
+
+  if (dados.paymentLink) {
+    vendedoresTemporarios[dados.paymentLink] = dados;
+    console.log('[armazenamento] 🔗 Indexado por paymentLink:', dados.paymentLink);
+  }
 }
 
-function buscarVendedor(idCliente) {
-  return vendedores[idCliente];
+function recuperarVendedor(id) {
+  console.log('[armazenamento] 🔍 Buscando vendedor por ID:', id);
+  return vendedoresTemporarios[id] || null;
 }
 
-function aprovarVendedor(idCliente) {
-  if (vendedores[idCliente]) vendedores[idCliente].aprovado = true;
-}
-
-function recuperarIdPorAssinaturaOuLink(assinatura, paymentLink) {
-  return vendedores[`assinatura:${assinatura}`] || vendedores[`link:${paymentLink}`] || null;
-}
-
-module.exports = {
-  salvarVendedorTemporario,
-  buscarVendedor,
-  aprovarVendedor,
-  recuperarIdPorAssinaturaOuLink
-};
+module.exports = { salvarVendedorTemporario, recuperarVendedor };
